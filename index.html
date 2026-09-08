@@ -1,1 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
+    <title>Keyboard Remote</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="remote">
+
+        <!-- BAGIAN KIRI -->
+        <button
+            id="shiftButton"
+            class="key-button shift"
+            type="button">
+
+            <span class="key-title">SHIFT</span>
+            <span class="key-status">Tekan & tahan</span>
+
+        </button>
+
+
+        <!-- BAGIAN KANAN -->
+        <button
+            id="enterButton"
+            class="key-button enter"
+            type="button">
+
+            <span class="key-title">ENTER</span>
+            <span class="key-status">Tekan & tahan</span>
+
+        </button>
+
+    </div>
+
+
+    <!-- STATUS KONEKSI -->
+
+    <div id="connectionStatus" class="connection">
+        ● Connecting...
+    </div>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
