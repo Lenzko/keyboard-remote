@@ -1,8 +1,7 @@
 // =====================================================
-// KEYBOARD REMOTE - BLUETOOTH BLE
+// KEYBOARD REMOTE - BLE
 // =====================================================
 
-// UUID yang sama dengan bluetooth_server.py
 const SERVICE_UUID =
     "7f6a0001-7b7b-4f9a-9c01-123456789abc";
 
@@ -25,122 +24,46 @@ const connectionStatus =
 
 
 // =====================================================
-// BLUETOOTH VARIABLES
+// BLUETOOTH
 // =====================================================
 
 let bluetoothDevice = null;
-
 let commandCharacteristic = null;
-
-
-// =====================================================
-// SHIFT STATUS
-// =====================================================
 
 let shiftPressed = false;
 
 
 // =====================================================
-// CEK ELEMENT
+// STATUS
 // =====================================================
 
-if (!shiftButton) {
+function setStatus(text, connected = false) {
 
-    console.error(
-        "ERROR: shiftButton tidak ditemukan."
-    );
-}
+    if (!connectionStatus) return;
 
-
-if (!enterButton) {
-
-    console.error(
-        "ERROR: enterButton tidak ditemukan."
-    );
-}
-
-
-if (!connectionStatus) {
-
-    console.error(
-        "ERROR: connectionStatus tidak ditemukan."
-    );
-}
-
-
-// =====================================================
-// CEK WEB BLUETOOTH
-// =====================================================
-
-if (!navigator.bluetooth) {
-
-    if (connectionStatus) {
-
-        connectionStatus.textContent =
-            "● Web Bluetooth tidak didukung";
-
-        connectionStatus.style.color =
-            "#ff4444";
-    }
-
-    console.error(
-        "Browser ini tidak mendukung Web Bluetooth."
-    );
-}
-
-
-// =====================================================
-// UPDATE STATUS
-// =====================================================
-
-function setStatus(
-    text,
-    connected = false
-) {
-
-    if (!connectionStatus) {
-        return;
-    }
-
-    connectionStatus.textContent =
-        "● " + text;
+    connectionStatus.textContent = "● " + text;
 
     connectionStatus.style.color =
-        connected
-            ? "#00ff66"
-            : "#ffffff";
+        connected ? "#00ff66" : "#ffffff";
 }
 
 
 // =====================================================
-// CONNECT BLUETOOTH
+// CONNECT
 // =====================================================
 
 async function connectBluetooth() {
 
     try {
 
-        setStatus(
-            "Mencari Bluetooth..."
-        );
-
-        console.log(
-            "Mencari KEYBOARD-REMOTE..."
-        );
-
-
-        // -------------------------------------------------
-        // CARI DEVICE
-        // -------------------------------------------------
+        setStatus("Mencari Bluetooth...");
 
         bluetoothDevice =
             await navigator.bluetooth.requestDevice({
 
                 filters: [
                     {
-                        services: [
-                            SERVICE_UUID
-                        ]
+                        services: [SERVICE_UUID]
                     }
                 ],
 
@@ -152,19 +75,13 @@ async function connectBluetooth() {
 
 
         console.log(
-            "Device ditemukan:",
+            "DEVICE:",
             bluetoothDevice.name
         );
 
 
-        setStatus(
-            "Menghubungkan..."
-        );
+        setStatus("Menghubungkan...");
 
-
-        // -------------------------------------------------
-        // EVENT DISCONNECT
-        // -------------------------------------------------
 
         bluetoothDevice.addEventListener(
             "gattserverdisconnected",
@@ -172,22 +89,9 @@ async function connectBluetooth() {
         );
 
 
-        // -------------------------------------------------
-        // CONNECT GATT
-        // -------------------------------------------------
-
         const server =
             await bluetoothDevice.gatt.connect();
 
-
-        console.log(
-            "GATT connected"
-        );
-
-
-        // -------------------------------------------------
-        // GET SERVICE
-        // -------------------------------------------------
 
         const service =
             await server.getPrimaryService(
@@ -195,29 +99,11 @@ async function connectBluetooth() {
             );
 
 
-        console.log(
-            "Service ditemukan"
-        );
-
-
-        // -------------------------------------------------
-        // GET CHARACTERISTIC
-        // -------------------------------------------------
-
         commandCharacteristic =
             await service.getCharacteristic(
                 COMMAND_UUID
             );
 
-
-        console.log(
-            "Command characteristic ditemukan"
-        );
-
-
-        // -------------------------------------------------
-        // BERHASIL TERHUBUNG
-        // -------------------------------------------------
 
         setStatus(
             "Bluetooth Connected",
@@ -226,35 +112,19 @@ async function connectBluetooth() {
 
 
         console.log(
-            "================================"
-        );
-
-        console.log(
-            "KEYBOARD-REMOTE TERHUBUNG"
-        );
-
-        console.log(
-            "================================"
+            "BLUETOOTH SIAP"
         );
 
     }
 
-
     catch (error) {
 
-        console.error(
-            "Bluetooth error:",
-            error
-        );
+        console.error(error);
 
-
-        setStatus(
-            "Bluetooth gagal"
-        );
-
+        setStatus("Bluetooth gagal");
 
         alert(
-            "Gagal terhubung ke Bluetooth.\n\n" +
+            "Bluetooth gagal:\n" +
             error.message
         );
 
@@ -264,7 +134,7 @@ async function connectBluetooth() {
 
 
 // =====================================================
-// BLUETOOTH DISCONNECTED
+// DISCONNECT
 // =====================================================
 
 function bluetoothDisconnected() {
@@ -273,26 +143,11 @@ function bluetoothDisconnected() {
         "Bluetooth terputus"
     );
 
+    commandCharacteristic = null;
 
-    commandCharacteristic =
-        null;
+    shiftPressed = false;
 
-
-    // -------------------------------------------------
-    // SAFETY SHIFT
-    // -------------------------------------------------
-
-    shiftPressed =
-        false;
-
-
-    if (shiftButton) {
-
-        shiftButton.classList.remove(
-            "active"
-        );
-    }
-
+    shiftButton.classList.remove("active");
 
     setStatus(
         "Bluetooth Disconnected"
@@ -302,368 +157,171 @@ function bluetoothDisconnected() {
 
 
 // =====================================================
-// KIRIM COMMAND
+// SEND COMMAND
 // =====================================================
 
-async function sendCommand(
-    command
-) {
-
-    // -------------------------------------------------
-    // CEK BLUETOOTH
-    // -------------------------------------------------
+async function sendCommand(command) {
 
     if (!commandCharacteristic) {
 
-        console.warn(
-            "Bluetooth belum terhubung:",
+        console.log(
+            "BELUM TERHUBUNG:",
             command
         );
 
-        return false;
+        return;
+
     }
 
 
     try {
 
-        // -------------------------------------------------
-        // ENCODE COMMAND
-        // -------------------------------------------------
-
-        const encoder =
-            new TextEncoder();
-
-
         const data =
-            encoder.encode(
-                command
-            );
+            new TextEncoder().encode(command);
 
-
-        // -------------------------------------------------
-        // KIRIM COMMAND
-        // -------------------------------------------------
 
         await commandCharacteristic
-            .writeValueWithoutResponse(
-                data
-            );
+            .writeValueWithoutResponse(data);
 
 
         console.log(
-            "COMMAND:",
+            "TERKIRIM:",
             command
         );
 
-
-        return true;
-
     }
-
 
     catch (error) {
 
         console.error(
-            "Gagal mengirim command:",
+            "GAGAL KIRIM:",
             command,
             error
         );
 
-
-        return false;
-
     }
 
 }
 
 
 // =====================================================
-// SHIFT DOWN
+// SHIFT
 // =====================================================
 
-async function shiftDown() {
+shiftButton.addEventListener(
+    "pointerdown",
+    async function(event) {
 
-    if (shiftPressed) {
+        event.preventDefault();
 
-        return;
+        if (shiftPressed) return;
+
+        shiftPressed = true;
+
+        shiftButton.classList.add("active");
+
+        console.log(
+            "SHIFT DOWN"
+        );
+
+        await sendCommand(
+            "SHIFT_DOWN"
+        );
+
     }
+);
 
 
-    shiftPressed =
-        true;
+shiftButton.addEventListener(
+    "pointerup",
+    async function(event) {
+
+        event.preventDefault();
+
+        if (!shiftPressed) return;
+
+        shiftPressed = false;
+
+        shiftButton.classList.remove("active");
+
+        console.log(
+            "SHIFT UP"
+        );
+
+        await sendCommand(
+            "SHIFT_UP"
+        );
+
+    }
+);
 
 
-    if (shiftButton) {
+shiftButton.addEventListener(
+    "pointercancel",
+    async function() {
 
-        shiftButton.classList.add(
+        if (!shiftPressed) return;
+
+        shiftPressed = false;
+
+        shiftButton.classList.remove("active");
+
+        await sendCommand(
+            "SHIFT_UP"
+        );
+
+    }
+);
+
+
+// =====================================================
+// ENTER
+// =====================================================
+// ENTER = SATU KLIK
+// =====================================================
+
+enterButton.addEventListener(
+    "click",
+    async function(event) {
+
+        event.preventDefault();
+
+        console.log(
+            "======================"
+        );
+
+        console.log(
+            "ENTER DIKLIK"
+        );
+
+        console.log(
+            "======================"
+        );
+
+
+        enterButton.classList.add(
             "active"
         );
-    }
 
 
-    console.log(
-        "SHIFT BUTTON DITEKAN"
-    );
-
-
-    await sendCommand(
-        "SHIFT_DOWN"
-    );
-
-}
-
-
-// =====================================================
-// SHIFT UP
-// =====================================================
-
-async function shiftUp() {
-
-    if (!shiftPressed) {
-
-        return;
-    }
-
-
-    shiftPressed =
-        false;
-
-
-    if (shiftButton) {
-
-        shiftButton.classList.remove(
-            "active"
-        );
-    }
-
-
-    console.log(
-        "SHIFT BUTTON DILEPAS"
-    );
-
-
-    await sendCommand(
-        "SHIFT_UP"
-    );
-
-}
-
-
-// =====================================================
-// SHIFT - POINTER DOWN
-// =====================================================
-
-if (shiftButton) {
-
-    shiftButton.addEventListener(
-        "pointerdown",
-        async function(event) {
-
-            event.preventDefault();
-
-
-            console.log(
-                "SHIFT POINTER DOWN:",
-                event.pointerType
-            );
-
-
-            // -------------------------------------------------
-            // POINTER CAPTURE
-            // -------------------------------------------------
-
-            try {
-
-                shiftButton.setPointerCapture(
-                    event.pointerId
-                );
-
-            }
-            catch (error) {
-
-                console.warn(
-                    "Pointer capture gagal:",
-                    error
-                );
-
-            }
-
-
-            // -------------------------------------------------
-            // TEKAN SHIFT
-            // -------------------------------------------------
-
-            await shiftDown();
-
-        }
-    );
-
-
-    // =====================================================
-    // SHIFT - POINTER UP
-    // =====================================================
-
-    shiftButton.addEventListener(
-        "pointerup",
-        async function(event) {
-
-            event.preventDefault();
-
-
-            console.log(
-                "SHIFT POINTER UP"
-            );
-
-
-            await shiftUp();
-
-
-            // -------------------------------------------------
-            // RELEASE POINTER CAPTURE
-            // -------------------------------------------------
-
-            try {
-
-                shiftButton.releasePointerCapture(
-                    event.pointerId
-                );
-
-            }
-            catch (error) {
-
-                // Tidak masalah
-            }
-
-        }
-    );
-
-
-    // =====================================================
-    // SHIFT - POINTER CANCEL
-    // =====================================================
-
-    shiftButton.addEventListener(
-        "pointercancel",
-        async function() {
-
-            console.log(
-                "SHIFT POINTER CANCEL"
-            );
-
-
-            await shiftUp();
-
-        }
-    );
-
-}
-
-
-// =====================================================
-// ENTER - SEKALI TEKAN
-// =====================================================
-
-async function enterClick() {
-
-    console.log(
-        "ENTER BUTTON DITEKAN"
-    );
-
-
-    // -------------------------------------------------
-    // KIRIM SATU COMMAND
-    // -------------------------------------------------
-
-    const success =
         await sendCommand(
             "ENTER"
         );
 
 
-    if (success) {
+        setTimeout(
+            function() {
 
-        console.log(
-            "ENTER BERHASIL DIKIRIM"
+                enterButton.classList.remove(
+                    "active"
+                );
+
+            },
+            100
         );
 
     }
-
-}
-
-
-// =====================================================
-// ENTER - POINTER DOWN
-// =====================================================
-
-if (enterButton) {
-
-    enterButton.addEventListener(
-        "pointerdown",
-        async function(event) {
-
-            event.preventDefault();
-
-
-            console.log(
-                "ENTER POINTER DOWN:",
-                event.pointerType
-            );
-
-
-            // -------------------------------------------------
-            // VISUAL ACTIVE
-            // -------------------------------------------------
-
-            enterButton.classList.add(
-                "active"
-            );
-
-
-            // -------------------------------------------------
-            // KIRIM ENTER
-            // -------------------------------------------------
-
-            await enterClick();
-
-        }
-    );
-
-
-    // =====================================================
-    // ENTER - POINTER UP
-    // =====================================================
-
-    enterButton.addEventListener(
-        "pointerup",
-        function(event) {
-
-            event.preventDefault();
-
-
-            enterButton.classList.remove(
-                "active"
-            );
-
-        }
-    );
-
-
-    // =====================================================
-    // ENTER - POINTER CANCEL
-    // =====================================================
-
-    enterButton.addEventListener(
-        "pointercancel",
-        function() {
-
-            enterButton.classList.remove(
-                "active"
-            );
-
-        }
-    );
-
-}
+);
 
 
 // =====================================================
@@ -671,75 +329,54 @@ if (enterButton) {
 // =====================================================
 
 const connectButton =
-    document.createElement(
-        "button"
-    );
+    document.createElement("button");
 
 
-connectButton.textContent =
+connectButton.innerText =
     "🔵 CONNECT BLUETOOTH";
 
 
 connectButton.style.position =
     "fixed";
 
-
 connectButton.style.top =
     "10px";
-
 
 connectButton.style.left =
     "50%";
 
-
 connectButton.style.transform =
     "translateX(-50%)";
 
-
 connectButton.style.zIndex =
-    "1000";
-
+    "9999";
 
 connectButton.style.padding =
     "12px 22px";
 
-
 connectButton.style.border =
     "none";
-
 
 connectButton.style.borderRadius =
     "25px";
 
-
 connectButton.style.background =
-    "#ffffff";
-
+    "white";
 
 connectButton.style.color =
-    "#111111";
-
+    "black";
 
 connectButton.style.fontWeight =
     "bold";
 
-
 connectButton.style.fontSize =
     "15px";
-
-
-connectButton.style.cursor =
-    "pointer";
 
 
 document.body.appendChild(
     connectButton
 );
 
-
-// =====================================================
-// CONNECT BUTTON CLICK
-// =====================================================
 
 connectButton.addEventListener(
     "click",
@@ -748,7 +385,7 @@ connectButton.addEventListener(
 
 
 // =====================================================
-// INITIAL STATUS
+// INITIAL
 // =====================================================
 
 setStatus(
