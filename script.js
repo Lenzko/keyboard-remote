@@ -41,16 +41,47 @@ let shiftPressed = false;
 
 
 // =====================================================
+// CEK ELEMENT
+// =====================================================
+
+if (!shiftButton) {
+
+    console.error(
+        "ERROR: shiftButton tidak ditemukan."
+    );
+}
+
+
+if (!enterButton) {
+
+    console.error(
+        "ERROR: enterButton tidak ditemukan."
+    );
+}
+
+
+if (!connectionStatus) {
+
+    console.error(
+        "ERROR: connectionStatus tidak ditemukan."
+    );
+}
+
+
+// =====================================================
 // CEK WEB BLUETOOTH
 // =====================================================
 
 if (!navigator.bluetooth) {
 
-    connectionStatus.textContent =
-        "● Web Bluetooth tidak didukung";
+    if (connectionStatus) {
 
-    connectionStatus.style.color =
-        "#ff4444";
+        connectionStatus.textContent =
+            "● Web Bluetooth tidak didukung";
+
+        connectionStatus.style.color =
+            "#ff4444";
+    }
 
     console.error(
         "Browser ini tidak mendukung Web Bluetooth."
@@ -66,6 +97,10 @@ function setStatus(
     text,
     connected = false
 ) {
+
+    if (!connectionStatus) {
+        return;
+    }
 
     connectionStatus.textContent =
         "● " + text;
@@ -244,16 +279,19 @@ function bluetoothDisconnected() {
 
 
     // -------------------------------------------------
-    // SAFETY
+    // SAFETY SHIFT
     // -------------------------------------------------
 
     shiftPressed =
         false;
 
 
-    shiftButton.classList.remove(
-        "active"
-    );
+    if (shiftButton) {
+
+        shiftButton.classList.remove(
+            "active"
+        );
+    }
 
 
     setStatus(
@@ -303,7 +341,7 @@ async function sendCommand(
 
 
         // -------------------------------------------------
-        // KIRIM TANPA RESPONSE
+        // KIRIM COMMAND
         // -------------------------------------------------
 
         await commandCharacteristic
@@ -345,24 +383,29 @@ async function sendCommand(
 
 async function shiftDown() {
 
-    // Jangan kirim berkali-kali
     if (shiftPressed) {
+
         return;
     }
 
 
-    // Tandai sedang ditekan
     shiftPressed =
         true;
 
 
-    // Ubah tampilan tombol
-    shiftButton.classList.add(
-        "active"
+    if (shiftButton) {
+
+        shiftButton.classList.add(
+            "active"
+        );
+    }
+
+
+    console.log(
+        "SHIFT BUTTON DITEKAN"
     );
 
 
-    // Kirim ke laptop
     await sendCommand(
         "SHIFT_DOWN"
     );
@@ -376,24 +419,29 @@ async function shiftDown() {
 
 async function shiftUp() {
 
-    // Kalau memang tidak sedang ditekan
     if (!shiftPressed) {
+
         return;
     }
 
 
-    // Lepaskan status
     shiftPressed =
         false;
 
 
-    // Ubah tampilan tombol
-    shiftButton.classList.remove(
-        "active"
+    if (shiftButton) {
+
+        shiftButton.classList.remove(
+            "active"
+        );
+    }
+
+
+    console.log(
+        "SHIFT BUTTON DILEPAS"
     );
 
 
-    // Kirim ke laptop
     await sendCommand(
         "SHIFT_UP"
     );
@@ -405,134 +453,217 @@ async function shiftUp() {
 // SHIFT - POINTER DOWN
 // =====================================================
 
-shiftButton.addEventListener(
-    "pointerdown",
-    async function(event) {
+if (shiftButton) {
 
-        event.preventDefault();
+    shiftButton.addEventListener(
+        "pointerdown",
+        async function(event) {
+
+            event.preventDefault();
 
 
-        // Ambil kontrol pointer
-        try {
-
-            shiftButton.setPointerCapture(
-                event.pointerId
+            console.log(
+                "SHIFT POINTER DOWN:",
+                event.pointerType
             );
 
-        }
-        catch (error) {
 
-            console.warn(
-                "Pointer capture gagal:",
-                error
+            // -------------------------------------------------
+            // POINTER CAPTURE
+            // -------------------------------------------------
+
+            try {
+
+                shiftButton.setPointerCapture(
+                    event.pointerId
+                );
+
+            }
+            catch (error) {
+
+                console.warn(
+                    "Pointer capture gagal:",
+                    error
+                );
+
+            }
+
+
+            // -------------------------------------------------
+            // TEKAN SHIFT
+            // -------------------------------------------------
+
+            await shiftDown();
+
+        }
+    );
+
+
+    // =====================================================
+    // SHIFT - POINTER UP
+    // =====================================================
+
+    shiftButton.addEventListener(
+        "pointerup",
+        async function(event) {
+
+            event.preventDefault();
+
+
+            console.log(
+                "SHIFT POINTER UP"
             );
 
+
+            await shiftUp();
+
+
+            // -------------------------------------------------
+            // RELEASE POINTER CAPTURE
+            // -------------------------------------------------
+
+            try {
+
+                shiftButton.releasePointerCapture(
+                    event.pointerId
+                );
+
+            }
+            catch (error) {
+
+                // Tidak masalah
+            }
+
         }
+    );
 
 
-        // Tekan SHIFT
-        await shiftDown();
+    // =====================================================
+    // SHIFT - POINTER CANCEL
+    // =====================================================
 
-    }
-);
+    shiftButton.addEventListener(
+        "pointercancel",
+        async function() {
 
-
-// =====================================================
-// SHIFT - POINTER UP
-// =====================================================
-
-shiftButton.addEventListener(
-    "pointerup",
-    async function(event) {
-
-        event.preventDefault();
-
-
-        // Lepaskan SHIFT
-        await shiftUp();
-
-
-        // Lepaskan pointer capture
-        try {
-
-            shiftButton.releasePointerCapture(
-                event.pointerId
+            console.log(
+                "SHIFT POINTER CANCEL"
             );
 
+
+            await shiftUp();
+
         }
-        catch (error) {
-
-            // Tidak masalah jika capture
-            // sudah dilepas browser
-        }
-
-    }
-);
-
-
-// =====================================================
-// SHIFT - POINTER CANCEL
-// =====================================================
-
-shiftButton.addEventListener(
-    "pointercancel",
-    async function() {
-
-        await shiftUp();
-
-    }
-);
-
-
-// =====================================================
-// SHIFT - POINTER LEAVE
-// =====================================================
-
-shiftButton.addEventListener(
-    "pointerleave",
-    async function() {
-
-        // Jangan langsung release ketika
-        // pointer masih di-capture.
-        //
-        // Karena kita menggunakan
-        // setPointerCapture(), pointerleave
-        // tidak menjadi akhir sentuhan.
-
-    }
-);
-
-
-// =====================================================
-// ENTER - SEKALI KLIK
-// =====================================================
-
-async function enterClick() {
-
-    // Kirim satu command saja
-    await sendCommand(
-        "ENTER"
     );
 
 }
 
 
 // =====================================================
-// ENTER BUTTON
+// ENTER - SEKALI TEKAN
 // =====================================================
 
-enterButton.addEventListener(
-    "click",
-    async function(event) {
+async function enterClick() {
 
-        event.preventDefault();
+    console.log(
+        "ENTER BUTTON DITEKAN"
+    );
 
 
-        // ENTER langsung dieksekusi
-        await enterClick();
+    // -------------------------------------------------
+    // KIRIM SATU COMMAND
+    // -------------------------------------------------
+
+    const success =
+        await sendCommand(
+            "ENTER"
+        );
+
+
+    if (success) {
+
+        console.log(
+            "ENTER BERHASIL DIKIRIM"
+        );
 
     }
-);
+
+}
+
+
+// =====================================================
+// ENTER - POINTER DOWN
+// =====================================================
+
+if (enterButton) {
+
+    enterButton.addEventListener(
+        "pointerdown",
+        async function(event) {
+
+            event.preventDefault();
+
+
+            console.log(
+                "ENTER POINTER DOWN:",
+                event.pointerType
+            );
+
+
+            // -------------------------------------------------
+            // VISUAL ACTIVE
+            // -------------------------------------------------
+
+            enterButton.classList.add(
+                "active"
+            );
+
+
+            // -------------------------------------------------
+            // KIRIM ENTER
+            // -------------------------------------------------
+
+            await enterClick();
+
+        }
+    );
+
+
+    // =====================================================
+    // ENTER - POINTER UP
+    // =====================================================
+
+    enterButton.addEventListener(
+        "pointerup",
+        function(event) {
+
+            event.preventDefault();
+
+
+            enterButton.classList.remove(
+                "active"
+            );
+
+        }
+    );
+
+
+    // =====================================================
+    // ENTER - POINTER CANCEL
+    // =====================================================
+
+    enterButton.addEventListener(
+        "pointercancel",
+        function() {
+
+            enterButton.classList.remove(
+                "active"
+            );
+
+        }
+    );
+
+}
 
 
 // =====================================================
