@@ -1,1 +1,170 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
 
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #111;
+}
+
+/* =====================================
+   LAYOUT UTAMA
+===================================== */
+
+.remote {
+    width: 100vw;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: row;
+
+    gap: 8px;
+    padding: 8px;
+}
+
+
+/* =====================================
+   TOMBOL
+===================================== */
+
+.key-button {
+
+    width: 50%;
+    height: 100%;
+
+    border: none;
+    border-radius: 20px;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    color: white;
+
+    user-select: none;
+    -webkit-user-select: none;
+
+    touch-action: none;
+
+    transition:
+        transform 0.08s,
+        filter 0.08s;
+}
+
+
+/* =====================================
+   SHIFT
+===================================== */
+
+.shift {
+    background: #1d4ed8;
+}
+
+
+/* =====================================
+   ENTER
+===================================== */
+
+.enter {
+    background: #15803d;
+}
+
+
+/* =====================================
+   SAAT DITEKAN
+===================================== */
+
+.key-button:active,
+.key-button.active {
+
+    transform: scale(0.97);
+
+    filter: brightness(1.35);
+}
+
+
+/* =====================================
+   TEKS
+===================================== */
+
+.key-title {
+
+    font-size: clamp(35px, 8vw, 90px);
+
+    font-weight: 800;
+
+    letter-spacing: 3px;
+}
+
+
+.key-status {
+
+    margin-top: 15px;
+
+    font-size: clamp(14px, 3vw, 25px);
+
+    opacity: 0.75;
+}
+
+
+/* =====================================
+   STATUS KONEKSI
+===================================== */
+
+.connection {
+
+    position: fixed;
+
+    bottom: 10px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    padding: 7px 15px;
+
+    border-radius: 20px;
+
+    background: rgba(0, 0, 0, 0.65);
+
+    color: white;
+
+    font-size: 13px;
+
+    z-index: 100;
+}
+
+
+/* =====================================
+   LANDSCAPE
+===================================== */
+
+@media (orientation: portrait) {
+
+    .remote {
+
+        transform: rotate(90deg);
+
+        width: 100vh;
+        height: 100vw;
+
+        position: absolute;
+
+        top: 50%;
+        left: 50%;
+
+        transform-origin: center;
+
+        translate: -50% -50%;
+    }
+}
